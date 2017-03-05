@@ -2,14 +2,15 @@ package org.datacleaner.components.fillpattern.swing;
 
 import java.awt.BorderLayout;
 import java.awt.Component;
+import java.awt.FlowLayout;
 import java.awt.event.ActionListener;
 import java.util.Arrays;
 import java.util.List;
 
 import javax.swing.JComponent;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTable;
-import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableModel;
 
@@ -25,6 +26,7 @@ import org.datacleaner.result.AnnotatedRowsResult;
 import org.datacleaner.result.renderer.RendererFactory;
 import org.datacleaner.storage.RowAnnotationFactory;
 import org.datacleaner.util.IconUtils;
+import org.datacleaner.util.ImageManager;
 import org.datacleaner.util.LabelUtils;
 import org.datacleaner.util.WidgetUtils;
 import org.datacleaner.widgets.Alignment;
@@ -32,107 +34,63 @@ import org.datacleaner.widgets.result.AbstractCrosstabResultSwingRenderer;
 import org.datacleaner.widgets.table.DCTable;
 import org.datacleaner.widgets.table.DCTableCellRenderer;
 import org.datacleaner.windows.DetailsResultWindow;
-import org.jdesktop.swingx.decorator.ColorHighlighter;
-import org.jdesktop.swingx.decorator.ComponentAdapter;
-import org.jdesktop.swingx.decorator.Highlighter;
 
-public class FillPatternGroupPanel extends JPanel {
+public class FillPatternGroupListPanel extends JPanel {
 
     private static final long serialVersionUID = 1L;
 
-    public FillPatternGroupPanel(WindowContext windowContext, RendererFactory rendererFactory, FillPatternResult result,
-            FillPatternGroup group) {
+    public FillPatternGroupListPanel(WindowContext windowContext, RendererFactory rendererFactory,
+            FillPatternResult result, FillPatternGroup group) {
 
-        final List<InputColumn<?>> inspectedColumns = result.getInspectedColumns();
-        final String[] headers = new String[1 + inspectedColumns.size()];
+        final String[] headers = new String[2];
 
         headers[0] = LabelUtils.COUNT_LABEL;
-        for (int i = 0; i < inspectedColumns.size(); i++) {
-            headers[1 + i] = inspectedColumns.get(i).getName();
-        }
+        headers[1] = "Filled columns";
 
         final TableModel tableModel = new DefaultTableModel(headers, group.getPatternCount());
         int row = 0;
         for (FillPattern fillPattern : group) {
-            int column = 0;
-
             final int observationCount = fillPattern.getObservationCount();
             final Object observationCountValue = createObservationCountValue(windowContext, rendererFactory, result,
                     fillPattern, observationCount);
-            tableModel.setValueAt(observationCountValue, row, column);
-            column++;
+            tableModel.setValueAt(observationCountValue, row, 0);
 
+            final List<InputColumn<?>> inspectedColumns = result.getInspectedColumns();
+
+            final DCPanel columnListPanel = new DCPanel();
+            columnListPanel.setLayout(new FlowLayout(Alignment.LEFT.getFlowLayoutAlignment(), 10, 2));
             final List<Object> fillOutcomes = fillPattern.getFillOutcomes();
-            for (Object fillOutcome : fillOutcomes) {
-                tableModel.setValueAt(fillOutcome, row, column);
-                column++;
+            for (int i = 0; i < fillOutcomes.size(); i++) {
+                final Object fillOutcome = fillOutcomes.get(i);
+                if (fillOutcome instanceof String) {
+                    switch ((String) fillOutcome) {
+                    case LabelUtils.NULL_LABEL:
+                    case LabelUtils.BLANK_LABEL:
+                        // skip this - not listed
+                        continue;
+                    }
+                }
+                columnListPanel.add(createColumnLabel(inspectedColumns.get(i)));
             }
+
+            tableModel.setValueAt(columnListPanel, row, 1);
             row++;
         }
 
         final DCTable table = new DCTable(tableModel);
-        table.setHighlighters(new InternalHighlighter());
         table.setColumnControlVisible(false);
 
-        // right align them all
-        for (int i = 0; i < headers.length; i++) {
-            table.getDCTableCellRenderer().setAlignment(i, Alignment.RIGHT);
-        }
+        // right align the first column all
+        table.getDCTableCellRenderer().setAlignment(0, Alignment.RIGHT);
 
         setLayout(new BorderLayout());
         add(table.toPanel(), BorderLayout.CENTER);
     }
 
-    private class InternalHighlighter implements Highlighter {
-
-        private ColorHighlighter _normalHighlighter;
-        private ColorHighlighter _blankHighlighter;
-        private ColorHighlighter _filledHighlighter;
-        private ColorHighlighter _nullHighlighter;
-
-        public InternalHighlighter() {
-            _normalHighlighter = new ColorHighlighter(WidgetUtils.BG_COLOR_BRIGHTEST, WidgetUtils.BG_COLOR_DARKEST,
-                    WidgetUtils.BG_COLOR_BRIGHTEST, WidgetUtils.BG_COLOR_DARKEST);
-            _filledHighlighter = new ColorHighlighter(WidgetUtils.BG_COLOR_BRIGHTEST, WidgetUtils.BG_COLOR_BLUE_DARK,
-                    WidgetUtils.BG_COLOR_BRIGHTEST, WidgetUtils.BG_COLOR_BLUE_DARK);
-            _blankHighlighter = new ColorHighlighter(WidgetUtils.BG_COLOR_BRIGHT,
-                    WidgetUtils.ADDITIONAL_COLOR_RED_BRIGHT, WidgetUtils.BG_COLOR_BRIGHT,
-                    WidgetUtils.ADDITIONAL_COLOR_RED_BRIGHT);
-            _nullHighlighter = new ColorHighlighter(WidgetUtils.BG_COLOR_BRIGHT,
-                    WidgetUtils.ADDITIONAL_COLOR_PURPLE_BRIGHT, WidgetUtils.BG_COLOR_BRIGHT,
-                    WidgetUtils.ADDITIONAL_COLOR_PURPLE_BRIGHT);
-        }
-
-        @Override
-        public Component highlight(Component component, ComponentAdapter adapter) {
-            if (adapter.getValue() instanceof String) {
-                final String str = (String) adapter.getValue();
-                switch (str) {
-                case LabelUtils.NULL_LABEL:
-                    return _nullHighlighter.highlight(component, adapter);
-                case LabelUtils.BLANK_LABEL:
-                    return _blankHighlighter.highlight(component, adapter);
-                case FillPatternAnalyzer.FILLED_LABEL:
-                    return _filledHighlighter.highlight(component, adapter);
-                default:
-                    return _normalHighlighter.highlight(component, adapter);
-                }
-            }
-            return component;
-        }
-
-        @Override
-        public void addChangeListener(ChangeListener l) {
-        }
-
-        @Override
-        public void removeChangeListener(ChangeListener l) {
-        }
-
-        @Override
-        public ChangeListener[] getChangeListeners() {
-            return new ChangeListener[0];
-        }
+    private JComponent createColumnLabel(InputColumn<?> inputColumn) {
+        final JLabel label = new JLabel(inputColumn.getName(), ImageManager.get().getImageIcon(IconUtils.MODEL_COLUMN,
+                IconUtils.ICON_SIZE_SMALL), Alignment.LEFT.getLabelAlignment());
+        return label;
     }
 
     protected DCTableCellRenderer createTableCellRenderer(DCTable table) {
