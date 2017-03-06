@@ -22,6 +22,6 @@ The result of the analyzer is a list of groups of inspections. Each inspection i
 
 ## Screenshots
 
-![Screenshot - Table view](examplez/screenshot_tableview.png "Screenshot - Table view")
+![Screenshot - Table view](examples/screenshot_tableview.png "Screenshot - Table view")
 
 ![Screenshot - Table view](examples/screenshot_listview.png "Screenshot - Table view")
