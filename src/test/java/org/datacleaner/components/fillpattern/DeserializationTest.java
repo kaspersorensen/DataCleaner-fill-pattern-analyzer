@@ -18,7 +18,7 @@ public class DeserializationTest {
     public void testDeserializeAnalysisResult() throws Exception {
         final AnalysisResult result;
         try (final FileInputStream in = new FileInputStream(new File(
-                "example/Fill-pattern-analysis-OSM-example.analysis.result.dat"))) {
+                "examples/Fill-pattern-analysis-OSM-example.analysis.result.dat"))) {
             try (final ChangeAwareObjectInputStream changeAwareObjectInputStream = new ChangeAwareObjectInputStream(
                     in)) {
                 final Object obj = changeAwareObjectInputStream.readObject();
