@@ -22,6 +22,6 @@ The result of the analyzer is a list of groups of inspections. Each inspection i
 
 ## Screenshots
 
-![Screenshot - OpenStreetMap (OSM) analysis example](screenshot_osm_address_analysis.png "Screenshot - OpenStreetMap (OSM) analysis example")
+![Screenshot - OpenStreetMap (OSM) analysis example](examples/screenshot_osm_address_analysis.png "Screenshot - OpenStreetMap (OSM) analysis example")
 ![Screenshot - List view](examples/screenshot_listview.png "Screenshot - List view")
 ![Screenshot - Table view](examples/screenshot_tableview.png "Screenshot - Table view")
